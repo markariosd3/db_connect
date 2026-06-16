@@ -31,6 +31,26 @@ This runs the default query: `SELECT version(), current_database(), current_user
 python -m db_connection --query-file query.sql
 ```
 
+## Check PostgreSQL version and info
+
+Get the PostgreSQL version:
+
+```powershell
+python -m db_connection --query "SELECT version();"
+```
+
+Get the current database and user:
+
+```powershell
+python -m db_connection --query "SELECT current_database(), current_user;"
+```
+
+Get version details in a more readable format:
+
+```powershell
+python -m db_connection --query "SELECT pg_version();"
+```
+
 ## Create a `users` table (SQL file)
 
 Create `create_users.sql` with:
@@ -246,3 +266,12 @@ python -m db_connection --query "SELECT id FROM sample WHERE content->'meta'->>'
 
 - These examples are beginner-friendly and safe to run; they use `IF NOT EXISTS` and `IF EXISTS` where appropriate.
 - For more advanced usage or automation, refer to the CLI help: `python -m db_connection --help`.
+
+## Resources for PostgreSQL Beginners
+
+- **PostgreSQL Official Documentation**: https://www.postgresql.org/docs/
+- **Common SQL Commands**: https://www.postgresql.org/docs/current/sql-commands.html
+- **PostgreSQL Tutorial**: https://www.postgresql.org/docs/current/tutorial.html
+- **JSONB Data Type**: https://www.postgresql.org/docs/current/datatype-json.html
+- **PostgreSQL Function Reference**: https://www.postgresql.org/docs/current/functions.html
+- **Query Optimization Tips**: https://www.postgresql.org/docs/current/sql-syntax.html

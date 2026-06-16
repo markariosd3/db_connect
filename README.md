@@ -89,6 +89,29 @@ python -m db_connection --query-file insert_users.sql --data-file users.csv --da
 Beginner-friendly examples (create tables, insert JSON/CSV, inspect tables, and verification commands) are consolidated in [GETTING_STARTED.md](GETTING_STARTED.md). Open that file for step-by-step PowerShell-ready commands.
 
 
+## Neon API Reference
+
+If you want to work with Neon directly, see the official API getting started guide: [Getting Started with the Neon API](https://api-docs.neon.tech/reference/getting-started-with-neon-api).
+
+
+## Current Deployment Limits
+
+The current deployment uses Neon's free plan.
+
+### Free Plan
+
+Current plan:
+
+$0 / month
+
+What's included per project:
+
+- 0.5 GB storage
+- Autoscaling to 2 CU
+- 100 compute hours
+- 10 branches
+
+
 Override the `.env` location:
 
 ```powershell

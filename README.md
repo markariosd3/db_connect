@@ -86,7 +86,7 @@ python -m db_connection --query-file insert_users.sql --data-file users.csv --da
 
 ## Examples
 
-Beginner-friendly examples (create tables, insert JSON/CSV, inspect tables, and verification commands) are consolidated in [EXAMPLES.md](EXAMPLES.md). Open that file for step-by-step PowerShell-ready commands.
+Beginner-friendly examples (create tables, insert JSON/CSV, inspect tables, and verification commands) are consolidated in [GETTING_STARTED.md](GETTING_STARTED.md). Open that file for step-by-step PowerShell-ready commands.
 
 
 Override the `.env` location:

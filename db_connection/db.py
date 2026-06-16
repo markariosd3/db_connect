@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import json
 import re
 import psycopg
 
@@ -17,13 +18,35 @@ def execute_query(cursor: psycopg.Cursor, query: str, data: Any | None) -> list[
         if data is None:
             cursor.execute(query)
         elif isinstance(data, dict):
-            cursor.execute(query, data)
+            # If the provided JSON file is the document itself (not a
+            # mapping of parameter names), and the query expects a single
+            # named parameter (e.g. %(content)s), wrap the JSON document
+            # into that parameter name so users can pass `sample.json`
+            # directly.
+            placeholder_names = re.findall(r"%\(([A-Za-z0-9_]+)\)s", query)
+            params: dict[str, Any]
+            if placeholder_names:
+                # If the dict already contains the named placeholders,
+                # use it (but convert nested structures to JSON strings).
+                if set(placeholder_names).issubset(set(data.keys())):
+                    params = _prepare_params_for_jsonb(data)
+                elif len(placeholder_names) == 1:
+                    # Wrap whole document into the single placeholder.
+                    params = {placeholder_names[0]: json.dumps(data)}
+                else:
+                    # Fall back to trying the dict as-is.
+                    params = _prepare_params_for_jsonb(data)
+            else:
+                params = _prepare_params_for_jsonb(data)
+            cursor.execute(query, params)
         elif isinstance(data, list):
             if len(data) == 0:
                 raise ValueError("Data file is empty; there is nothing to execute.")
-
             if all(isinstance(item, dict) for item in data):
-                cursor.executemany(query, data)
+                # Prepare each dict for executemany (convert nested
+                # structures to JSON strings where necessary).
+                prepared = [_prepare_params_for_jsonb(item) for item in data]
+                cursor.executemany(query, prepared)
             elif all(isinstance(item, (list, tuple)) for item in data):
                 cursor.executemany(query, data)
             else:
@@ -67,6 +90,21 @@ def execute_query(cursor: psycopg.Cursor, query: str, data: Any | None) -> list[
     if cursor.description is None:
         return []
     return cursor.fetchall()
+
+
+def _prepare_params_for_jsonb(params: dict[str, Any]) -> dict[str, Any]:
+    """Convert any dict/list values in a parameter mapping to JSON strings.
+
+    This helps psycopg adapt complex Python structures when the query
+    expects a `jsonb` value.
+    """
+    out: dict[str, Any] = {}
+    for k, v in params.items():
+        if isinstance(v, (dict, list)):
+            out[k] = json.dumps(v)
+        else:
+            out[k] = v
+    return out
 
 
 def connect_and_execute(database_url: str, query: str, data: Any | None, dry_run: bool) -> list[tuple]:

@@ -116,16 +116,11 @@ There is a `sample.json` in this repo. The steps below create the table, wrap th
 python -m db_connection --query-file create_sample_table.sql
 ```
 
-2) Wrap `sample.json` so the CLI will send it as a named parameter called `content`:
+
+2) Insert `sample.json` directly (no wrapping needed).
 
 ```powershell
-python -c "import json; data=json.load(open('sample.json')); json.dump({'content': json.dumps(data)}, open('sample_wrapped.json','w'), indent=2)"
-```
-
-3) Insert the wrapped JSON (cast to `jsonb`):
-
-```powershell
-python -m db_connection --query "INSERT INTO sample (content) VALUES (%(content)s::jsonb)" --data-file sample_wrapped.json --data-format json
+python -m db_connection --query "INSERT INTO sample (content) VALUES (%(content)s::jsonb)" --data-file sample.json --data-format json
 ```
 
 4) Verify the insert (show the stored `meta.name`):

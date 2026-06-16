@@ -175,6 +175,59 @@ python -m db_connection --query "SELECT (content->'settings'->>'snap')::numeric 
 python -m db_connection --query "DROP TABLE IF EXISTS sample;"
 ```
 
+## Update nested JSON fields (modify stored JSONB data)
+
+Once you have JSON stored in a JSONB column, you can modify nested fields using PostgreSQL's `jsonb_set` operator.
+
+**Example: Update a field in a nested object**
+
+Suppose you want to change the `speed_limit_mps` field in an edge object:
+
+```powershell
+python -m db_connection --query "UPDATE sample SET content = jsonb_set(content, '{edges,0,speed_limit_mps}', '3.0') WHERE id = 1;"
+```
+
+Verify the update:
+
+```powershell
+python -m db_connection --query "SELECT (content->'edges'->>0)::jsonb->>'speed_limit_mps' FROM sample WHERE id = 1;"
+```
+
+**Example: Add a new field to a nested object**
+
+Add a `last_updated` timestamp to the metadata:
+
+```powershell
+python -m db_connection --query "UPDATE sample SET content = jsonb_set(content, '{meta,last_updated}', to_jsonb(now()::text)) WHERE id = 1;"
+```
+
+Verify:
+
+```powershell
+python -m db_connection --query "SELECT content->'meta'->>'last_updated' FROM sample WHERE id = 1;"
+```
+
+**Example: Append a new edge object to the array**
+
+Add a new edge with the structure you showed:
+
+```powershell
+python -m db_connection --query "UPDATE sample SET content = jsonb_set(content, '{edges,-1}', '{\"a\": \"WPT_EAST_CORRIDOR\", \"b\": \"WPT_AISLE_1213\", \"ramp\": false, \"distance_m\": 7.5, \"traffic_class\": \"forklift_only\", \"width_m\": 3.5, \"direction\": \"bidirectional\", \"speed_limit_mps\": 2.0, \"vertical_clearance_m\": 14.0, \"surface\": \"concrete_sealed\"}'::jsonb) WHERE id = 1;"
+```
+
+Verify the append:
+
+```powershell
+python -m db_connection --query "SELECT jsonb_array_length(content->'edges') FROM sample WHERE id = 1;"
+```
+
+**Notes on JSONB update syntax:**
+- `jsonb_set(jsonb, path_array, value)` sets a value at a JSON path.
+- Path syntax: `'{key1, key2, index}'` for nested objects and arrays.
+- Use `-1` as the array index to append.
+- Use `to_jsonb()` to convert PostgreSQL values (like `now()`) to JSON.
+- For large updates, consider using `jsonb_insert` or replacing the entire column.
+
 ## Quick verification queries
 
 - Count rows:

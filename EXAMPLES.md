@@ -108,7 +108,7 @@ python -m db_connection --query "DROP TABLE IF EXISTS temp_demo;"
 
 ## Create a `sample` JSONB table and insert `sample.json`
 
-There is a `sample.json` in this repo. The steps below create the table, wrap the file, insert it, and verify the insert.
+There is a `sample.json` in this repo. The steps below create the table, insert the file, then demonstrate queries to inspect nested fields (`binTypes`, `zones`, `nodes`, etc.).
 
 1) Create the table (we provide `create_sample_table.sql`):
 
@@ -116,17 +116,57 @@ There is a `sample.json` in this repo. The steps below create the table, wrap th
 python -m db_connection --query-file create_sample_table.sql
 ```
 
-
-2) Insert `sample.json` directly (no wrapping needed).
+2) Insert `sample.json` directly (no wrapping needed):
 
 ```powershell
 python -m db_connection --query "INSERT INTO sample (content) VALUES (%(content)s::jsonb)" --data-file sample.json --data-format json
 ```
 
-4) Verify the insert (show the stored `meta.name`):
+3) Basic verification — check rows and a top-level field:
 
 ```powershell
+python -m db_connection --query "SELECT COUNT(*) FROM sample;"
 python -m db_connection --query "SELECT id, content->'meta'->>'name' AS meta_name FROM sample;"
+```
+
+4) Inspect nested JSON content (examples):
+
+- Pretty-print the full JSON stored in the first row:
+
+```powershell
+python -m db_connection --query "SELECT jsonb_pretty(content) FROM sample LIMIT 1;"
+```
+
+- List top-level keys:
+
+```powershell
+python -m db_connection --query "SELECT jsonb_object_keys(content) FROM sample;"
+```
+
+- Show `binTypes` keys (the available bin types):
+
+```powershell
+python -m db_connection --query "SELECT jsonb_object_keys(content->'binTypes') FROM sample;"
+```
+
+- Count zones and show the first 5 zone entries (pretty-printed):
+
+```powershell
+python -m db_connection --query "SELECT jsonb_array_length(content->'zones') FROM sample;"
+python -m db_connection --query "SELECT jsonb_pretty(elem) FROM sample, jsonb_array_elements(content->'zones') AS elem LIMIT 5;"
+```
+
+- Count nodes and show a few node entries:
+
+```powershell
+python -m db_connection --query "SELECT jsonb_array_length(content->'nodes') FROM sample;"
+python -m db_connection --query "SELECT jsonb_pretty(elem) FROM sample, jsonb_array_elements(content->'nodes') AS elem LIMIT 5;"
+```
+
+- Extract a scalar value (example: settings.snap):
+
+```powershell
+python -m db_connection --query "SELECT (content->'settings'->>'snap')::numeric AS snap FROM sample;"
 ```
 
 5) Remove the example table when finished:

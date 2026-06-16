@@ -12,7 +12,7 @@ A professional PostgreSQL CLI built for usability, secure credentials, and begin
 
 ## Getting Started
 
-If you are new to Python or database CLI tools, open `GETTING_STARTED.md` for a step-by-step beginner guide.
+If you are new to Python or database CLI tools, see [Getting Started](GETTING_STARTED.md) for a step-by-step beginner guide.
 
 ## Setup
 

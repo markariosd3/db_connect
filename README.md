@@ -1,8 +1,8 @@
-# **connection-db** is a lightweight Python utility written to establish and verify a connection to a Neon-hosted PostgreSQL database (project: Hail_Mary, AWS US West 2 — Oregon).
+# **connection_db** is a lightweight Python utility written to establish and verify a connection to a Neon-hosted PostgreSQL database (project: Hail_Mary, AWS US West 2 — Oregon).
 
 The immediate need was practical: Neon provisions a serverless Postgres instance that scales to zero when inactive, which means the first connection after an idle period wakes the compute node. Before building any application logic on top of it, I needed confidence that the connection string, credentials, and pooler configuration were all working correctly end-to-end from my local WinPython development environment.
 
-`connection-db` handles that verification step — it reads the database connection parameters from a `.env` file (host, database name, role, password, and pooler host), attempts a connection, and confirms the database is reachable and responding. Keeping credentials out of the source code and in environment variables from the start enforces the same discipline the production deployment will require, and makes it straightforward for a second developer to connect by supplying their own `.env` without touching the codebase.
+`connection_db` handles that verification step — it reads the database connection parameters from a `.env` file (host, database name, role, password, and pooler host), attempts a connection, and confirms the database is reachable and responding. Keeping credentials out of the source code and in environment variables from the start enforces the same discipline the production deployment will require, and makes it straightforward for a second developer to connect by supplying their own `.env` without touching the codebase.
 
 This is the foundation layer for a larger warehouse routing and slotting system. Getting the database connection right and documented first means every subsequent component — schema creation, data ingestion, the routing engine — has a known-good, reproducible starting point.
 
@@ -83,6 +83,51 @@ python -m db_connection --query "INSERT INTO users (name, email) VALUES (%(name)
 ```powershell
 python -m db_connection --query-file insert_users.sql --data-file users.csv --data-format csv
 ```
+
+## Example: create `sample` table from `sample.json`
+
+This simple example shows beginners how to create a small `JSONB` table named `sample`, insert the provided `sample.json` document into it, and verify the result.
+
+1. Create a SQL file `create_sample_table.sql` with the following content:
+
+```sql
+CREATE TABLE IF NOT EXISTS sample (
+	id SERIAL PRIMARY KEY,
+	content JSONB NOT NULL
+);
+```
+
+Run the create script:
+
+```powershell
+python -m db_connection --query-file create_sample_table.sql
+```
+
+2. Wrap `sample.json` so the CLI sends it as a named parameter called `content`.
+	 From PowerShell run:
+
+```powershell
+python -c "import json; data=json.load(open('sample.json')); json.dump({'content': json.dumps(data)}, open('sample_wrapped.json','w'), indent=2)"
+```
+
+3. Insert the wrapped JSON into the `sample` table:
+
+```powershell
+python -m db_connection --query "INSERT INTO sample (content) VALUES (%(content)s::jsonb)" --data-file sample_wrapped.json --data-format json
+```
+
+4. Verify the insert (example extracts the top-level `meta.name` field):
+
+```powershell
+python -m db_connection --query "SELECT id, content->'meta'->>'name' AS meta_name FROM sample;"
+```
+
+5. When finished, drop the table:
+
+```powershell
+python -m db_connection --query "DROP TABLE IF EXISTS sample;"
+```
+
 
 Override the `.env` location:
 

@@ -218,7 +218,115 @@ Run:
 python -m db_connection --query-file drop_roles.sql
 ```
 
-## 10. Need help?
+## 10. Inspect and manage tables
+
+This section shows a few useful commands to inspect tables in the database, get column names, and create or remove a temporary table for testing.
+
+### 10.1 List all user tables
+
+Run:
+
+```powershell
+python -m db_connection --query "SELECT table_schema, table_name FROM information_schema.tables WHERE table_type='BASE TABLE' AND table_schema NOT IN ('pg_catalog','information_schema');"
+```
+
+### 10.2 Show table field names
+
+Replace `users` with the table you want to inspect:
+
+```powershell
+python -m db_connection --query "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='users';"
+```
+
+### 10.3 Create a temporary demo table
+
+Create `create_temp_demo.sql`:
+
+```sql
+CREATE TABLE IF NOT EXISTS temp_demo (
+  id SERIAL PRIMARY KEY,
+  name TEXT,
+  created_at TIMESTAMP DEFAULT now()
+);
+```
+
+Run:
+
+```powershell
+python -m db_connection --query-file create_temp_demo.sql
+```
+
+Or run inline:
+
+```powershell
+python -m db_connection --query "CREATE TABLE IF NOT EXISTS temp_demo (id SERIAL PRIMARY KEY, name TEXT, created_at TIMESTAMP DEFAULT now());"
+```
+
+### 10.4 Drop the demo table
+
+Create `drop_temp_demo.sql`:
+
+```sql
+DROP TABLE IF EXISTS temp_demo;
+```
+
+Run:
+
+```powershell
+python -m db_connection --query-file drop_temp_demo.sql
+```
+
+Or run inline:
+
+```powershell
+python -m db_connection --query "DROP TABLE IF EXISTS temp_demo;"
+```
+
+### 10.5 Create a table and insert `sample.json` (beginner-friendly)
+
+This project includes a `sample.json` file. The steps below create a simple `jsonb` table, show how to wrap `sample.json` into a named parameter the CLI understands, insert the file, and verify the result.
+
+1) Create the table file `create_sample_json_table.sql` with this content:
+
+```sql
+CREATE TABLE IF NOT EXISTS sample_json (
+  id SERIAL PRIMARY KEY,
+  content JSONB NOT NULL
+);
+```
+
+2) Run the create script (this makes the table in your database):
+
+```powershell
+python -m db_connection --query-file create_sample_json_table.sql
+```
+
+3) Wrap `sample.json` so the CLI sends it as a named parameter called `content`.
+   Run this Python one-liner from PowerShell (it reads `sample.json` and writes `sample_wrapped.json`):
+
+```powershell
+python -c "import json; data=json.load(open('sample.json')); json.dump({'content': json.dumps(data)}, open('sample_wrapped.json','w'), indent=2)"
+```
+
+4) Insert the wrapped JSON into the table:
+
+```powershell
+python -m db_connection --query "INSERT INTO sample_json (content) VALUES (%(content)s::jsonb)" --data-file sample_wrapped.json --data-format json
+```
+
+5) Verify the insert (this example extracts the `meta.name` field from the stored JSON):
+
+```powershell
+python -m db_connection --query "SELECT id, content->'meta'->>'name' AS meta_name FROM sample_json;"
+```
+
+6) When finished, drop the table:
+
+```powershell
+python -m db_connection --query "DROP TABLE IF EXISTS sample_json;"
+```
+
+## 11. Need help?
 
 Use the built-in help screen:
 

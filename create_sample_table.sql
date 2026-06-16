@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS sample (
+  id SERIAL PRIMARY KEY,
+  content JSONB NOT NULL
+);

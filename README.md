@@ -84,49 +84,9 @@ python -m db_connection --query "INSERT INTO users (name, email) VALUES (%(name)
 python -m db_connection --query-file insert_users.sql --data-file users.csv --data-format csv
 ```
 
-## Example: create `sample` table from `sample.json`
+## Examples
 
-This simple example shows beginners how to create a small `JSONB` table named `sample`, insert the provided `sample.json` document into it, and verify the result.
-
-1. Create a SQL file `create_sample_table.sql` with the following content:
-
-```sql
-CREATE TABLE IF NOT EXISTS sample (
-	id SERIAL PRIMARY KEY,
-	content JSONB NOT NULL
-);
-```
-
-Run the create script:
-
-```powershell
-python -m db_connection --query-file create_sample_table.sql
-```
-
-2. Wrap `sample.json` so the CLI sends it as a named parameter called `content`.
-	 From PowerShell run:
-
-```powershell
-python -c "import json; data=json.load(open('sample.json')); json.dump({'content': json.dumps(data)}, open('sample_wrapped.json','w'), indent=2)"
-```
-
-3. Insert the wrapped JSON into the `sample` table:
-
-```powershell
-python -m db_connection --query "INSERT INTO sample (content) VALUES (%(content)s::jsonb)" --data-file sample_wrapped.json --data-format json
-```
-
-4. Verify the insert (example extracts the top-level `meta.name` field):
-
-```powershell
-python -m db_connection --query "SELECT id, content->'meta'->>'name' AS meta_name FROM sample;"
-```
-
-5. When finished, drop the table:
-
-```powershell
-python -m db_connection --query "DROP TABLE IF EXISTS sample;"
-```
+Beginner-friendly examples (create tables, insert JSON/CSV, inspect tables, and verification commands) are consolidated in [EXAMPLES.md](EXAMPLES.md). Open that file for step-by-step PowerShell-ready commands.
 
 
 Override the `.env` location:
